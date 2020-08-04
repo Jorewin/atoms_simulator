@@ -1,4 +1,4 @@
 # Szybkość działania programu
-time_step = 0.01
+time_step = 0.05
 # Tryb odbić: 0 - osiowy, 1 - kątowy
-bounce_mode = 0
+bounce_mode = 1

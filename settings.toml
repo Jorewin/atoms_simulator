@@ -2,15 +2,15 @@
 # Aby zmienić wynik testu, należy odpowiednio zmodyfikować ten plik.
 
 # współczynnik wysokości: int ( 20 <= h <= 100 )
-h = 17
+h = 20
 # współczynnik szerokości: int ( 20 <= l <= 100 )
 w = 40
 # promień atomu: float ( 0 < r )
 r = 30
 # prędkość graniczna: int ( 1 < v )
-v = 3
+v = 5
 # tolerancja kolizji: int ( c <= 1 / 10 * r )
-c = 3
+c = 2
 
 # stała M: int ( 1 < M )
 M = 10
