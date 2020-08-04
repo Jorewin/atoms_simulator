@@ -16,6 +16,6 @@ Simulation of gas particles in a closed container.
 - Initialize a virtual enviroment `python3 -m venv venv`.
 - Activate the virtual enviroment `source venv/bin/activate`.
 - Install all of the necessary python dependencies `python3 -m pip install -r requirements.txt`.
-- Run the program `python3 atoms_simulator\atoms_simulator`.
+- Run the program `python3 atoms_simulator/atoms_simulator`.
 - To change how the program behaves modify the *settings.toml* file.
 - **DEV** Visit *dev_options.toml* file in order to change additional settings.
