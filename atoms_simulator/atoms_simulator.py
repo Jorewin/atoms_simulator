@@ -76,19 +76,19 @@ class Atom:
     """A class used to store and process information about an instance of an atom.
 
     :ivar x: x position coordinate
-    :type x: int
+    :type x: float
     :ivar y: y position coordinate
-    :type y: int
+    :type y: float
     :ivar vx: velocity vector's x coordinate
     :type vx: float
     :ivar vy: velocity vector's y coordinate
     :type vy: float
     :ivar color: color used to mark the atom during the simulation
-    :type color: pygame.Color
+    :type color: :class:`pygame.Color`
     :ivar radius:
     :type radius: int
     """
-    def __init__(self, x: int, y: int, vx: float, vy: float, color: pygame.Color, radius: int):
+    def __init__(self, x: int, y: int, vx: int, vy: int, color: pygame.Color, radius: int):
         """Initialize an Atom type object.
 
         :param x: x position coordinate
@@ -98,10 +98,10 @@ class Atom:
         :param color: color used to mark the atom during the simulation
         :param radius:
         """
-        self.x = x
-        self.y = y
-        self.vx = vx
-        self.vy = vy
+        self.x = float(x)
+        self.y = float(y)
+        self.vx = float(vx)
+        self.vy = float(vy)
         self.color = color
         self.radius = radius
 
@@ -110,9 +110,8 @@ class Atom:
 
         :param time: time
         """
-        self.x += int(self.vx * time)
-        self.y += int(self.vy * time)
-
+        self.x += self.vx * time
+        self.y += self.vy * time
 
     def wall_check(self, width: int, height: int, collision_tolerance: int):
         """Checks if a collision between the atom and a wall occured and modifies the atom's velocity.
@@ -120,11 +119,11 @@ class Atom:
         :param height: height of the container
         :param collision_tolerance:
         """
-        if (self.x - self.radius <= collision_tolerance and self.vx < 0) or \
-        (self.x + self.radius >= width - collision_tolerance and self.vx > 0):
+        if self.x + self.vx - self.radius < collision_tolerance or \
+                self.x + self.vx + self.radius > width - collision_tolerance:
             self.vx *= -1
-        if (self.y - self.radius <= collision_tolerance and self.vy < 0) or \
-        (self.y + self.radius >= height - collision_tolerance and self.vy > 0):
+        if self.y + self.vy - self.radius < collision_tolerance or \
+                self.y + self.vy + self.radius > height - collision_tolerance:
             self.vy *= -1
 
     def atom_check(self, other: Atom, collision_tolerance: int):
@@ -136,23 +135,26 @@ class Atom:
         distance = ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
         future_distance = ((self.x + self.vx - other.x - other.vx) ** 2 +
                            (self.y + self.vy - other.y - other.vy) ** 2) ** 0.5
-        if 2 * self.radius <= distance <= 2 * self.radius + collision_tolerance or \
-                future_distance < 2 * self.radius:
+        condition_1 = 2 * self.radius <= distance <= 2 * self.radius + collision_tolerance
+        condition_2 = abs(-self.y * other.x / self.x - other.y + 2 * self.y) / \
+                      (self.y ** 2 / self.x ** 2 + 1) ** 0.5 <= other.radius
+        condition_3 = abs(-other.y * self.x / other.x - self.y + 2 * other.y) / \
+                      (other.y ** 2 / other.x ** 2 + 1) ** 0.5 <= self.radius
+        condition_4 = future_distance < 2 * self.radius
+        if (condition_1 and (condition_2 or condition_3)) or condition_4:
             a = other.x - self.x
             b = other.y - self.y
-            if (a * self.vx + b * self.vy) == 0:
+            if (a ** 2 + b ** 2) == 0:
                 xn1, yn1 = 0, 0
             else:
-                cosine = (a * self.vx + b * self.vy) / ((a ** 2 + b ** 2) * (self.vx ** 2 + self.vy ** 2)) ** 0.5
-                xn1 = (cosine ** 2 * a * (self.vx ** 2 + self.vy ** 2)) / (a * self.vx + b * self.vy)
-                yn1 = (cosine ** 2 * b * (self.vx ** 2 + self.vy ** 2)) / (a * self.vx + b * self.vy)
+                xn1 = (a * (a * self.vx + b * self.vy)) / (a ** 2 + b ** 2)
+                yn1 = (b * (a * self.vx + b * self.vy)) / (a ** 2 + b ** 2)
             a, b = -a, -b
-            if (a * other.vx + b * other.vy) == 0:
+            if (a ** 2 + b ** 2) == 0:
                 xn2, yn2 = 0, 0
             else:
-                cosine = (a * other.vx + b * other.vy) / ((a ** 2 + b ** 2) * (other.vx ** 2 + other.vy ** 2)) ** 0.5
-                xn2 = (cosine ** 2 * a * (other.vx ** 2 + other.vy ** 2)) / (a * other.vx + b * other.vy)
-                yn2 = (cosine ** 2 * b * (other.vx ** 2 + other.vy ** 2)) / (a * other.vx + b * other.vy)
+                xn2 = (a * (a * other.vx + b * other.vy)) / (a ** 2 + b ** 2)
+                yn2 = (b * (a * other.vx + b * other.vy)) / (a ** 2 + b ** 2)
             self.vx, self.vy, other.vx, other.vy = \
                 self.vx - xn1 + xn2, self.vy - yn1 + yn2, other.vx - xn2 + xn1, other.vy - yn2 + yn1
 
@@ -231,8 +233,8 @@ if __name__ == "__main__":
         pygame.draw.rect(screen, pygame.Color(225, 228, 232), [0, height, width, 1])
         pygame.draw.rect(screen, pygame.Color(250, 251, 252), pygame.Rect((0, 0), (width, height)))
         for i in range(number_of_atoms):
-            pygame.gfxdraw.filled_circle(screen, atoms[i].x, atoms[i].y, settings['r'], atoms[i].color)
-            pygame.gfxdraw.aacircle(screen, atoms[i].x, atoms[i].y, settings['r'], atoms[i].color)
+            pygame.gfxdraw.filled_circle(screen, int(atoms[i].x), int(atoms[i].y), settings['r'], atoms[i].color)
+            pygame.gfxdraw.aacircle(screen, int(atoms[i].x), int(atoms[i].y), settings['r'], atoms[i].color)
             atoms[i].wall_check(width, height, settings['c'])
             for j in range(i + 1, number_of_atoms):
                 if dev["bounce_mode"] == 1:
