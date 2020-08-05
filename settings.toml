@@ -4,7 +4,7 @@
 # współczynnik wysokości: int ( 20 <= h <= 100 )
 h = 20
 # współczynnik szerokości: int ( 20 <= l <= 100 )
-w = 40
+w = 20
 # promień atomu: float ( 0 < r )
 r = 30
 # prędkość graniczna: int ( 1 < v )
@@ -13,7 +13,7 @@ v = 5
 c = 2
 
 # stała M: int ( 1 < M )
-M = 10
+M = 100
 # stała K: int ( min(h, l) <= K )
 K = 20
 
