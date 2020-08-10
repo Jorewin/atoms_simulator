@@ -105,15 +105,12 @@ class Atom:
         self.color = color
         self.radius = radius
 
-    def update(self, x: float, y: float):
-        self.x, self.y = x, y
+    def update(self, time_step: float):
+        """Updates the objects position by its velocity multiplied by *time_step*.
 
-    def move(self, time: float):
-        """Updates the objects position by its velocity multiplied by *time*.
-
-        :param time: time
+        :param time_step:
         """
-        return self.x + self.vx * time, self.y + self.vy * time
+        self.x, self.y = self.x + self.vx * time_step, self.y + self.vy * time_step
 
     def wall_bounce(self, width: int, height: int, collision_tolerance: int):
         """Checks if a collision between the atom and a wall occured and modifies the atom's velocity.
@@ -121,11 +118,11 @@ class Atom:
         :param height: height of the container
         :param collision_tolerance:
         """
-        if (self.x - self.radius <= collision_tolerance and self.vx < 0) or \
-                (self.x + self.radius >= width - collision_tolerance and self.vx > 0):
+        if self.x + self.vx - self.radius < collision_tolerance or \
+                self.x + self.vx + self.radius > width - collision_tolerance:
             self.vx *= -1
-        if (self.y - self.radius <= collision_tolerance and self.vy < 0) or \
-                (self.y + self.radius >= height - collision_tolerance and self.vy > 0):
+        if self.y + self.vy - self.radius < collision_tolerance or \
+                self.y + self.vy + self.radius > height - collision_tolerance:
             self.vy *= -1
 
     def atom_bounce(self, other: Atom, collision_tolerance: int):
@@ -135,22 +132,32 @@ class Atom:
         :param collision_tolerance:
         """
         distance = ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
+        future_distance = ((self.x + self.vx - other.x - other.vx) ** 2 +
+                           (self.y + self.vy - other.y - other.vy) ** 2) ** 0.5
         condition_1 = self.radius + other.radius <= distance <= self.radius + other.radius + collision_tolerance
-        condition_2 = abs(self.vy * other.x / self.vx - other.y + (self.x * self.vy - self.vx * self.y) / self.vx) / \
-                      (self.vy ** 2 / self.vx ** 2 + 1) ** 0.5 <= other.radius
-        condition_3 = \
-            abs(-other.vy * self.x / other.vx - self.y + (other.x * other.vy - other.vx * other.y) / other.vx) / \
-            (other.vy ** 2 / other.vx ** 2 + 1) ** 0.5 <= self.radius
-        if condition_1 and (condition_2 or condition_3):
-            a = other.x - self.x
-            b = other.y - self.y
-            if (a ** 2 + b ** 2) == 0:
+        a = other.x - self.x
+        b = other.y - self.y
+        condition_2 = True
+        if abs(self.vx) >= abs(self.vy) and self.vx * a <= 0:
+            condition_2 = False
+        if abs(self.vx) < abs(self.vy) and self.vy * b <= 0:
+            condition_2 = False
+        a, b = -a, -b
+        condition_3 = True
+        if abs(other.vx) >= abs(other.vy) and other.vx * a <= 0:
+            condition_3 = False
+        if abs(other.vx) < abs(other.vy) and other.vy * b <= 0:
+            condition_3 = False
+        condition_4 = future_distance < self.radius + other.radius
+        if condition_1 and (condition_2 or condition_3) or condition_4:
+            a, b = -a, -b
+            if a == b == 0:
                 xn1, yn1 = 0, 0
             else:
                 xn1 = (a * (a * self.vx + b * self.vy)) / (a ** 2 + b ** 2)
                 yn1 = (b * (a * self.vx + b * self.vy)) / (a ** 2 + b ** 2)
             a, b = -a, -b
-            if (a ** 2 + b ** 2) == 0:
+            if a == b == 0:
                 xn2, yn2 = 0, 0
             else:
                 xn2 = (a * (a * other.vx + b * other.vy)) / (a ** 2 + b ** 2)
@@ -187,7 +194,6 @@ class Atom:
             x = a + self.x
             y = b + self.y
         return x, y
-
 
 
 class Text:
@@ -319,18 +325,13 @@ def main():
         container_surface.fill(pygame.Color(250, 251, 252))
         pygame.draw.rect(screen, pygame.Color(225, 228, 232), border_rect, border_width)
         for i in range(number_of_atoms):
-            x, y = coords(container, atoms[i].x, atoms[i].y)
-            pygame.gfxdraw.filled_circle(container_surface, x, y, settings['r'], atoms[i].color)
-            pygame.gfxdraw.aacircle(container_surface, x, y, settings['r'], atoms[i].color)
             for j in range(i + 1, number_of_atoms):
                 atoms[i].atom_bounce(atoms[j], settings['c'])
             atoms[i].wall_bounce(width, height, settings['c'])
-        for i in range(number_of_atoms):
-            x, y = atoms[i].move(1)
-            for j in range(i):
-                x, y = atoms[i].atom_check(atoms[j], x, y)
-            x, y = atoms[i].wall_check(width, height, x, y)
-            atoms[i].update(x, y)
+            x, y = coords(container, atoms[i].x, atoms[i].y)
+            pygame.gfxdraw.filled_circle(container_surface, x, y, atoms[i].radius, atoms[i].color)
+            pygame.gfxdraw.aacircle(container_surface, x, y, atoms[i].radius, atoms[i].color)
+            atoms[i].update(1)
         screen.blit(container_surface, container)
         for text in texts.values():
             screen.blit(text.gen_text(font, 1), text.field)
@@ -338,8 +339,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit(0)
-        time.sleep(0.05)
-    pygame.QUIT
+        time.sleep(0.01)
 
 
 if __name__ == "__main__":

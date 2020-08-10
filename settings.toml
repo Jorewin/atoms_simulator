@@ -8,9 +8,9 @@ w = 20
 # promień atomu: float ( 0 < r )
 r = 30
 # prędkość graniczna: int ( 1 < v )
-v = 5
+v = 3
 # tolerancja kolizji: int ( c <= 1 / 10 * r )
-c = 2
+c = 3
 
 # stała M: int ( 1 < M )
 M = 100
