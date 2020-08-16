@@ -19,7 +19,7 @@ K = 20
 
 # n_min + n_step * (n_number - 1) <= 1 / 4 * h * l
 # Minimalna liczba atomów: int ( 1 < n_min )
-n_min = 8
+N = 8
 # Krok zwiększenia liczby atomów: int ( 1 < n_step )
 n_step = 1
 # Liczba testów do przeprowadzenia: int ( 1 <= n_number)
