@@ -1,13 +1,19 @@
 from __future__ import annotations
+import os
+import os.path
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from pygame import gfxdraw
 from pygame import freetype
 import sys
 import random
 import toml
-import time
 import re
 import os.path
+
+
+__version__ = "1.0.0"
+__authors__ = "Jakub Błażejowski, Maciej Kurzawa, Marcin Krueger, Jakub Owadowski"
 
 
 class Settings:
@@ -27,7 +33,7 @@ class Settings:
         self.source = source
 
     def __getitem__(self, item):
-        if self.tags.get(item):
+        if self.tags.get(item) is not None:
             return self.tags[item]
         else:
             return None
@@ -190,6 +196,8 @@ class TestAtom(Atom):
         :type color: :class:`pygame.Color`
         :ivar radius: the radius of the atom
         :type radius: int
+        :ivar bounced: Indicates if the atom has bounced recently.
+        :type bounced: bool
         :ivar distance: The distance that the atom has managed to travel since the last bounce.
         :type distance: float
         :ivar distance_storage: A list containing all previous distances.
@@ -206,6 +214,7 @@ class TestAtom(Atom):
         :param radius: the radius of the atom
         """
         super().__init__(x, y, vx, vy, color, radius)
+        self.bounced = False
         self.distance = 0.0
         self.distance_storage = []
 
@@ -214,8 +223,10 @@ class TestAtom(Atom):
 
         :return:
         """
-        self.distance_storage.append(self.distance)
-        self.distance = 0.0
+        if self.bounced:
+            self.distance_storage.append(self.distance)
+            self.distance = 0.0
+        self.bounced = False
 
     def update(self, time_step: float):
         """Updates the object's position by its velocity multiplied by *time_step*.
@@ -233,6 +244,17 @@ class TestAtom(Atom):
         if len(self.distance_storage) == 0:
             return 0.0
         return sum(self.distance_storage) / len(self.distance_storage)
+
+    def atom_bounce(self, other: Atom, collision_tolerance: int) -> bool:
+        """Checks if a collision between two atoms occured and modifies their velocities.
+
+        :param other: an another atom
+        :param collision_tolerance:
+        :return:
+        """
+        result = super().atom_bounce(other, collision_tolerance)
+        self.bounced = self.bounced or result
+        return result
 
 
 class TextBlock:
@@ -280,9 +302,10 @@ class TextBlock:
         :return:
         """
         if self.width == 0:
-            _, rect = self.font.render(self.text, self.color)
+            _, rect = self.font.render(f"|{self.text}|", self.color)
         else:
-            charr = f"{self.text}: {float(10 ** (self.width - 1)):<{self.width + self.precision + 1}.{self.precision}f}"
+            placeholder = float(10 ** (self.width - 1))
+            charr = f"|{self.text}: {placeholder:<{self.width + self.precision + 1}.{self.precision}f}|"
             _, rect = self.font.render(charr, self.color)
         rect.width += rect.x
         rect.height = self.font.get_sized_height()
@@ -310,17 +333,17 @@ class TextBlock:
         :param value: An updated value for an optional number field.
         """
         if self.width == 0:
-            self.font.render_to(surface, self.render_point, self.text, self.color)
+            self.font.render_to(surface, self.render_point, f"|{self.text}|", self.color)
         elif value >= 10 ** self.width:
             placeholder = float(10 ** self.width - 10 ** -self.precision)
-            charr = f"{self.text}: {placeholder:<{self.width + self.precision + 1}.{self.precision}f}"
+            charr = f"|{self.text}: {placeholder:<{self.width + self.precision + 1}.{self.precision}f}|"
             self.font.render_to(surface, self.render_point, charr, self.color)
         elif value <= -10 ** (self.width - 1):
             placeholder = float(-10 ** (self.width - 1) + 10 ** -self.precision)
-            charr = f"{self.text}: {placeholder:<{self.width + self.precision + 1}.{self.precision}f}"
+            charr = f"|{self.text}: {placeholder:<{self.width + self.precision + 1}.{self.precision}f}|"
             self.font.render_to(surface, self.render_point, charr, self.color)
         else:
-            charr = f"{self.text}: {float(value):<{self.width + self.precision + 1}.{self.precision}f}"
+            charr = f"|{self.text}: {float(value):<{self.width + self.precision + 1}.{self.precision}f}|"
             self.font.render_to(surface, self.render_point, charr, self.color)
 
 
@@ -386,23 +409,26 @@ def convert_coords(container: pygame.Rect, x: float, y: float) -> (int, int):
 
 
 def simulate(settings: Settings, graphics: bool):
+    here = os.path.dirname(os.path.dirname(__file__))
+
     # Variables
     width = settings['w'] * settings['r']
     height = settings['h'] * settings['r']
-    number_of_atoms = settings["n"]
+    number_of_atoms = settings["N"]
     time_step = 1 / max(settings['K'], min(settings['w'], settings['h'])) * settings['v']
 
+    # Prepare graphic enviroment if necessary
     if graphics:
-        # Pygame settings
+        # Pygame variables #1
         pygame.init()
-        icon = pygame.image.load("assets/icon.png")
-        pygame.display.set_caption(f"{project['project_name']} {project['version']}")
+        icon = pygame.image.load(os.path.join(here, "assets/icon.png"))
+        pygame.display.set_caption(f"atoms_simulator {__version__}")
         pygame.display.set_icon(icon)
-        font = pygame.freetype.Font("assets/JetBrainsMono-Bold.ttf", size=25)
+        font = pygame.freetype.Font(os.path.join(here, "assets/JetBrainsMono-Bold.ttf"), size=25)
         padding = 10
         border_width = 1
 
-        # Create rects
+        # Arrange the fields
         text_blocks = create_text_blocks(font, padding)
         container = pygame.Rect((0, 0), (width, height))
         p_container = pygame.Rect((0, 0), (width + 2 * padding, height + 2 * padding))
@@ -417,62 +443,50 @@ def simulate(settings: Settings, graphics: bool):
             screen_rect.union_ip(text_block.p_field)
             text_block.update_field()
         info_object = pygame.display.Info()
-        if info_object.current_w < screen_rect.width or info_object.current_h < screen_rect.height:
-            return
         p_container.centerx = screen_rect.centerx
         container.center = p_container.center
         border_rect = container.inflate(2 * border_width, 2 * border_width)
+        if info_object.current_w < screen_rect.width or info_object.current_h < screen_rect.height:
+            screen_rect = container
 
-        # Initialize simulation
+        # Pygame variables #2
         screen = pygame.display.set_mode(screen_rect.bottomright)
         container_surface = pygame.Surface(container.size)
+
+    # Create atoms
     test_atom = TestAtom(settings['r'], settings['r'], random.randint(1, settings['v']),
                          random.randint(1, settings['v']), pygame.Color(255, 0, 0), settings['r'])
     atoms = [test_atom]
     atoms = random_list(number_of_atoms, width, height, settings['v'], settings['r'], settings['c'], atoms=atoms)
-    while True:
+
+    # Start simulation
+    turn = 0
+    while turn <= settings['M']:
         for i in range(len(atoms)):
             for j in range(i, len(atoms)):
                 if i == j:
                     continue
                 atoms[i].atom_bounce(atoms[j], settings['c'])
             atoms[i].wall_bounce(width, height, settings['c'])
-        screen.fill(pygame.Color(246, 248, 250))
-        container_surface.fill(pygame.Color(250, 251, 252))
-        pygame.draw.rect(screen, pygame.Color(225, 228, 232), border_rect, border_width)
-        for i in range(number_of_atoms):
-            x, y = convert_coords(container, atoms[i].x, atoms[i].y)
-            pygame.gfxdraw.filled_circle(container_surface, x, y, atoms[i].radius, atoms[i].color)
-            pygame.gfxdraw.aacircle(container_surface, x, y, atoms[i].radius, atoms[i].color)
-            atoms[i].update(time_step)
-        screen.blit(container_surface, container)
-        text_blocks["title"].gen_text(screen)
-        text_blocks["bounces"].gen_text(screen, len(test_atom.distance_storage))
-        text_blocks["average"].gen_text(screen, test_atom.average_distance())
-        pygame.display.flip()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit(0)
+        test_atom.store_distance()
+        if graphics:
+            screen.fill(pygame.Color(246, 248, 250))
+            container_surface.fill(pygame.Color(250, 251, 252))
+            pygame.draw.rect(screen, pygame.Color(225, 228, 232), border_rect, border_width)
+            for i in range(number_of_atoms):
+                x, y = convert_coords(container, atoms[i].x, atoms[i].y)
+                pygame.gfxdraw.filled_circle(container_surface, x, y, atoms[i].radius, atoms[i].color)
+                pygame.gfxdraw.aacircle(container_surface, x, y, atoms[i].radius, atoms[i].color)
+                atoms[i].update(time_step)
+            screen.blit(container_surface, container)
+            text_blocks["title"].gen_text(screen)
+            text_blocks["bounces"].gen_text(screen, len(test_atom.distance_storage))
+            text_blocks["average"].gen_text(screen, test_atom.average_distance())
+            pygame.display.flip()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit(0)
+        if settings['M'] > 0:
+            turn += 1
+    return test_atom.distance_storage
 
-
-if __name__ == "__main__":
-    settings = Settings("settings.toml")
-    if not settings.load():
-        settings.tags = {
-            'h': 20,
-            'w': 20,
-            'r': 30,
-            'v': 3,
-            'c': 3,
-            'M': 100,
-            'K': 20,
-            'N': 8
-        }
-        settings.save()
-    project = Settings("atoms_simulator.toml")
-    if not project.load():
-        project.tags = {
-            "project_name": "Atoms_simulator",
-            "version": "unknown_version"
-        }
-    simulate(settings, True)
