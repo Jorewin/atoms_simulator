@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+include MANIFEST.in
+include settings.toml
+graft assets
+graft atoms_simulator
+graft bin
