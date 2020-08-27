@@ -452,12 +452,12 @@ def simulate(settings: Settings, graphics: bool):
     :param graphics: Indicates if the pygame module should be used for graphical representation of the simulation.
     :raise ValueError: if velocity value if equal to 0
     """
-    here = os.path.dirname(os.path.dirname(__file__))
+    here = os.path.dirname(__file__)
 
     settings_check(settings)
 
     # Variables
-    with open("VERSION", 'r') as version_source:
+    with open(os.path.join(here, "VERSION"), 'r') as version_source:
         version = version_source.read()
     width = settings['w'] * settings['r']
     height = settings['h'] * settings['r']

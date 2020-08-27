@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 def get_project_path():
-    return os.path.dirname(os.path.dirname(atoms_simulator.__file__))
+    return os.path.dirname(atoms_simulator.__file__)
 
 
 def get_path(path):
@@ -28,7 +28,7 @@ def ats():
 @ats.command()
 def init():
     """Creates a settings_ats.toml file in the current directory."""
-    if not os.path.isfile("settings.toml"):
+    if not os.path.isfile("settings_ats.toml"):
         source = os.path.join(get_project_path(), "assets/settings_source.toml")
         target = os.path.join(os.getcwd(), "settings_ats.toml")
         shutil.copy(source, target)
@@ -48,12 +48,17 @@ def test(graphics, no_save):
         return
     if settings_ats["N_min"] is None:
         click.echo("The settings file is corrupted, please generate a new settings file.")
+        return
     if settings_ats["N_step"] is None:
         click.echo("The settings file is corrupted, please generate a new settings file.")
+        return
     if settings_ats["N_number"] is None:
         click.echo("The settings file is corrupted, please generate a new settings file.")
+        return
     if settings_ats["R"] is None:
         click.echo("The settings file is corrupted, please generate a new settings file.")
+        return
+    click.echo("Starting simulation...")
     n_stop = settings_ats["N_min"] + settings_ats["N_step"] * (settings_ats["N_number"] - 1)
     # size = max([settings_ats['h'], settings_ats['w'], math.ceil((4 * (n_stop + 1)) ** 0.5)])
     # settings_ats['h'] = size
@@ -98,10 +103,12 @@ def plot(data_batch):
         click.echo(
             "The ats_results catalog doesn't exist within the current working directory. Generate some data first."
         )
+        return
     if not os.path.isdir(path := os.path.join(os.getcwd(), "ats_results", data_batch)):
         click.echo(
             f"The ats_results/{data_batch} catalog doesn't exist within the current working directory."
         )
+        return
     target_path = get_path(os.path.join(results_path, "figures_batch"))
     os.mkdir(target_path)
     settings_ats = atoms_simulator.Settings(os.path.join(path, "used.toml"))
