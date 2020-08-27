@@ -38,6 +38,10 @@ class Settings:
         else:
             return None
 
+    def __setitem__(self, key, value):
+        if self.tags.get(key) is not None:
+            self.tags[key] = value
+
     def new(self, name: str, value):
         """Create a new setting
 
@@ -158,9 +162,13 @@ class Atom:
         condition_1 = self.radius + other.radius <= distance <= self.radius + other.radius + collision_tolerance
         a = other.x - self.x
         b = other.y - self.y
-        condition_2 = self.vx * a + self.vy * b > 0
+        # condition_2 = self.vx * a + self.vy * b > 0
+        condition_2 = (abs(self.vx) >= abs(self.vy) and self.vx * a > 0) or \
+                      (abs(self.vx) < abs(self.vy) and self.vy * b > 0)
         a, b = -a, -b
-        condition_3 = other.vx * a + other.vy * b > 0
+        # condition_3 = other.vx * a + other.vy * b > 0
+        condition_3 = (abs(other.vx) >= abs(other.vy) and other.vx * a > 0) or \
+                      (abs(other.vx) < abs(other.vy) and other.vy * b > 0)
         condition_4 = future_distance < self.radius + other.radius
         if condition_1 and (condition_2 or condition_3):
             a, b = -a, -b
@@ -359,18 +367,27 @@ def random_list(n: int, width: int, height: int, v: int,
     :param collision_tolerance:
     :param atoms: New atoms will be added to this list.
     :return: list containing *n* randomly generated :py:class:`Atom` objects
+    :raise ValueError: if the container is too small for the chosen number of atoms
     """
     if atoms is None:
         atoms = []
-    for _ in range(n):
-        while True:
-            x = random.randint(atom_radius, width - atom_radius)
-            y = random.randint(atom_radius, height - atom_radius)
-            for i in range(len(atoms)):
-                if ((x - atoms[i].x)**2 + (y - atoms[i].y)**2)**0.5 < 2 * atom_radius + collision_tolerance:
-                    break
-            else:
+    positions = []
+    for i in range(height // (2 * atom_radius)):
+        for j in range(width // (2 * atom_radius)):
+            positions.append((2 * i * atom_radius + atom_radius, 2 * j * atom_radius + atom_radius))
+
+    for atom in atoms:
+        for i in range(len(positions)):
+            if positions[i] == (atom.x, atom.y):
+                del positions[i]
                 break
+
+    for _ in range(n):
+        if len(positions) == 0:
+            raise ValueError("The container is too small for the chosen number of atoms.")
+        index = random.randint(0, len(positions) - 1)
+        x, y = positions[index]
+        del positions[index]
         vx = 0
         vy = 0
         while vx == 0:
@@ -402,20 +419,54 @@ def convert_coords(container: pygame.Rect, x: float, y: float) -> (int, int):
     :param container: the simulation surface
     :param x: the x position coordinate
     :param y: the x position coordinate
-    :return:
+    :return: converted coordinates
     """
     y = container.height - y
     return int(x), int(y)
 
 
+def settings_check(settings: Settings):
+    """Checks if all of the necessary keys are present in a settings dictionary.
+
+    :param settings:
+    :raise ValueError: if one of the settings is not present
+    """
+    if settings['h'] is None:
+        raise ValueError("The settings file doesn't specify the height of the container.")
+    if settings['w'] is None:
+        raise ValueError("The settings file doesn't specify the width of the container.")
+    if settings['r'] is None:
+        raise ValueError("The settings file doesn't specify the atom radius.")
+    if settings['v'] is None:
+        raise ValueError("The settings file doesn't specify the velocity limit.")
+    if settings['c'] is None:
+        raise ValueError("The settings file doesn't specify the collision tolerance.")
+    if settings['M'] is None:
+        raise ValueError("The settings file doesn't specify the M constant.")
+    if settings['K'] is None:
+        raise ValueError("The settings file doesn't specify the K constant.")
+    if settings['N'] is None:
+        raise ValueError("The settings file doesn't specify the number of atoms")
+
+
 def simulate(settings: Settings, graphics: bool):
+    """Performs a simulation of atoms in an enclosed container.
+
+    :param settings: Settings file containing all of the necessary options.
+    :param graphics: Indicates if the pygame module should be used for graphical representation of the simulation.
+    :raise ValueError: if velocity value if equal to 0
+    """
     here = os.path.dirname(os.path.dirname(__file__))
+
+    settings_check(settings)
 
     # Variables
     width = settings['w'] * settings['r']
     height = settings['h'] * settings['r']
     number_of_atoms = settings["N"]
     time_step = 1 / max(settings['K'], min(settings['w'], settings['h'])) * settings['v']
+    if settings['v'] == 0:
+        raise ValueError("The velocity limit value must be different than 0.")
 
     # Prepare graphic enviroment if necessary
     if graphics:
@@ -477,7 +528,6 @@ def simulate(settings: Settings, graphics: bool):
                 x, y = convert_coords(container, atoms[i].x, atoms[i].y)
                 pygame.gfxdraw.filled_circle(container_surface, x, y, atoms[i].radius, atoms[i].color)
                 pygame.gfxdraw.aacircle(container_surface, x, y, atoms[i].radius, atoms[i].color)
-                atoms[i].update(time_step)
             screen.blit(container_surface, container)
             text_blocks["title"].gen_text(screen)
             text_blocks["bounces"].gen_text(screen, len(test_atom.distance_storage))
@@ -486,7 +536,8 @@ def simulate(settings: Settings, graphics: bool):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit(0)
+        for i in range(number_of_atoms):
+            atoms[i].update(time_step)
         if settings['M'] > 0:
             turn += 1
-    return test_atom.distance_storage
-
+    return len(test_atom.distance_storage), test_atom.average_distance()

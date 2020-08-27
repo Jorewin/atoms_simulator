@@ -1,27 +1,23 @@
 # To jest plik konfiguracyjny projektu
 # Aby zmienić wynik testu, należy odpowiednio zmodyfikować ten plik.
 
-# współczynnik wysokości: int ( 20 <= h <= 100 )
-h = 36
-# współczynnik szerokości: int ( 20 <= l <= 100 )
-w = 64
-# promień atomu: float ( 0 < r )
+# współczynnik wysokości: int, ( 20 <= h <= 100 )
+h = 20
+# współczynnik szerokości: int, ( 20 <= l <= 100 )
+w = 20
+# promień atomu: float, ( 0 < r )
 r = 30
-# prędkość graniczna: int ( 1 < v )
+# prędkość graniczna: int, ( 1 < v )
 v = 3
-# tolerancja kolizji: int ( c <= 1 / 10 * r )
+# tolerancja kolizji: int, ( c <= 1 / 10 * r )
 c = 3
 
-# stała M: int ( 1 < M ), 0 dla ciągłej symulacji
+# stała M: int, ( 1 < M ), 0 dla ciągłej symulacji
 M = 0
-# stała K: int ( min(h, l) <= K )
+# stała K: int, ( min(h, l) <= K )
 K = 20
 
-# n_min + n_step * (n_number - 1) <= 1 / 4 * h * l
-# Minimalna liczba atomów: int ( 1 < n_min )
+# Liczba atomów: int, ( 1 < N <= 1 / 4 * h * l - 1 )
 N = 8
-# Krok zwiększenia liczby atomów: int ( 1 < n_step )
-n_step = 1
-# Liczba testów do przeprowadzenia: int ( 1 <= n_number)
-n_number = 10
+
 
