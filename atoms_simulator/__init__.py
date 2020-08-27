@@ -12,10 +12,6 @@ import re
 import os.path
 
 
-__version__ = "1.0.0"
-__authors__ = "Jakub Błażejowski, Maciej Kurzawa, Marcin Krueger, Jakub Owadowski"
-
-
 class Settings:
     """A class used to load, save and access settings from a TOML file.
 
@@ -461,6 +457,8 @@ def simulate(settings: Settings, graphics: bool):
     settings_check(settings)
 
     # Variables
+    with open("VERSION", 'r') as version_source:
+        version = version_source.read()
     width = settings['w'] * settings['r']
     height = settings['h'] * settings['r']
     number_of_atoms = settings["N"]
@@ -473,7 +471,7 @@ def simulate(settings: Settings, graphics: bool):
         # Pygame variables #1
         pygame.init()
         icon = pygame.image.load(os.path.join(here, "assets/icon.png"))
-        pygame.display.set_caption(f"atoms_simulator {__version__}")
+        pygame.display.set_caption(f"atoms_simulator {version}")
         pygame.display.set_icon(icon)
         font = pygame.freetype.Font(os.path.join(here, "assets/JetBrainsMono-Bold.ttf"), size=25)
         padding = 10
