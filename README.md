@@ -11,7 +11,7 @@ Simulation of gas particles in a closed container.
 - To see help concerning one of the available commands, use the --help option with the respective command.
 ex. `ats test --help`
 - Please remember to alter the configuration file if you want to change how the program behaves.
-To get the file use the `ats innit` command. Every command that uses the configuration file looks for it in the current
+To get the file use the `ats init` command. Every command that uses the configuration file looks for it in the current
 working directory.
 
 ## How to use (Linux, Python 3.8)
@@ -23,5 +23,5 @@ working directory.
 - To see help concerning one of the available commands, use the --help option with the respective command.
 ex. `ats test --help`
 - Please remember to alter the configuration file if you want to change how the program behaves.
-To get the file use the `ats innit` command. Every command that uses the configuration file looks for it in the current
+To get the file use the `ats init` command. Every command that uses the configuration file looks for it in the current
 working directory.
