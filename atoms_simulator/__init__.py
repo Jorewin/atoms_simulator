@@ -465,7 +465,7 @@ def simulate(settings: Settings, graphics: bool):
     width = settings['w'] * settings['r']
     height = settings['h'] * settings['r']
     number_of_atoms = settings["N"]
-    time_step = 1 / (max(settings['K'], min(settings['w'], settings['h'])) * settings['v'])
+    time_step = 1 / (settings['K'] * settings['v'])
     if settings['v'] == 0:
         raise ValueError("The velocity limit value must be different than 0.")
 
