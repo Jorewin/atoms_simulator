@@ -8,14 +8,14 @@ w = 20
 # promień atomu: float, ( 0 < r )
 r = 30
 # prędkość graniczna: int, ( 1 < v )
-v = 3
+v = 10
 # tolerancja kolizji: int, ( c <= 1 / 10 * r )
 c = 3
 
 # stała M: int, ( 1 < M ), 0 dla ciągłej symulacji
 M = 0
 # stała K: int, ( min(h, l) <= K )
-K = 20
+K = 5
 # ilość powtórzeń pojedynczego testu: int, ( 1 <= R )
 R = 1
 
