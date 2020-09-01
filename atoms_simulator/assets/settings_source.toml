@@ -2,9 +2,9 @@
 # Aby zmienić wynik testu, należy odpowiednio zmodyfikować ten plik.
 
 # współczynnik wysokości: int, ( 20 <= h <= 100 )
-h = 40
+h = 20
 # współczynnik szerokości: int, ( 20 <= l <= 100 )
-w = 40
+w = 20
 # promień atomu: float, ( 0 < r )
 r = 30
 # prędkość graniczna: int, ( 1 < v )
@@ -12,18 +12,18 @@ v = 3
 # tolerancja kolizji: int, ( c <= 1 / 10 * r )
 c = 3
 
-# stała M: int, ( 1 < M )
-M = 5000
+# stała M: int, ( 1 < M ), 0 dla ciągłej symulacji
+M = 0
 # stała K: int, ( min(h, l) <= K )
 K = 20
 # ilość powtórzeń pojedynczego testu: int, ( 1 <= R )
-R = 5
+R = 1
 
 # N_min + N_step * (N_number - 1) <= 1 / 4 * h * l - 1
 # Minimalna liczba atomów: int, ( 1 < N_min )
-N_min = 10
+N_min = 8
 # Krok zwiększenia liczby atomów: int, ( 1 < n_step )
-N_step = 10
+N_step = 1
 # Liczba testów do przeprowadzenia: int, ( 1 <= n_number)
-N_number = 30
+N_number = 1
 

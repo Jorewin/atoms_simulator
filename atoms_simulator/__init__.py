@@ -158,14 +158,14 @@ class Atom:
         condition_1 = self.radius + other.radius <= distance <= self.radius + other.radius + collision_tolerance
         a = other.x - self.x
         b = other.y - self.y
-        # condition_2 = self.vx * a + self.vy * b > 0
-        condition_2 = (abs(self.vx) >= abs(self.vy) and self.vx * a > 0) or \
-                      (abs(self.vx) < abs(self.vy) and self.vy * b > 0)
+        condition_2 = round(self.vx * a + self.vy * b, 1) > 0
+        # condition_2 = (abs(self.vx) >= abs(self.vy) and self.vx * a > 0) or \
+        #               (abs(self.vx) < abs(self.vy) and self.vy * b > 0)
         a, b = -a, -b
-        # condition_3 = other.vx * a + other.vy * b > 0
-        condition_3 = (abs(other.vx) >= abs(other.vy) and other.vx * a > 0) or \
-                      (abs(other.vx) < abs(other.vy) and other.vy * b > 0)
-        condition_4 = future_distance < self.radius + other.radius
+        condition_3 = round(other.vx * a + other.vy * b, 1) > 0
+        # condition_3 = (abs(other.vx) >= abs(other.vy) and other.vx * a > 0) or \
+        #               (abs(other.vx) < abs(other.vy) and other.vy * b > 0)
+        # condition_4 = future_distance < self.radius + other.radius
         if condition_1 and (condition_2 or condition_3):
             a, b = -a, -b
             if a == b == 0:
@@ -368,9 +368,12 @@ def random_list(n: int, width: int, height: int, v: int,
     if atoms is None:
         atoms = []
     positions = []
-    for i in range(height // (2 * atom_radius)):
-        for j in range(width // (2 * atom_radius)):
-            positions.append((2 * i * atom_radius + atom_radius, 2 * j * atom_radius + atom_radius))
+    for i in range(height // (2 * atom_radius + collision_tolerance)):
+        for j in range(width // (2 * atom_radius + collision_tolerance)):
+            positions.append(
+                (i * (2 * atom_radius + collision_tolerance) + atom_radius,
+                 j * (2 * atom_radius + collision_tolerance) + atom_radius)
+            )
 
     for atom in atoms:
         for i in range(len(positions)):
@@ -462,7 +465,7 @@ def simulate(settings: Settings, graphics: bool):
     width = settings['w'] * settings['r']
     height = settings['h'] * settings['r']
     number_of_atoms = settings["N"]
-    time_step = 1 / max(settings['K'], min(settings['w'], settings['h'])) * settings['v']
+    time_step = 1 / (max(settings['K'], min(settings['w'], settings['h'])) * settings['v'])
     if settings['v'] == 0:
         raise ValueError("The velocity limit value must be different than 0.")
 

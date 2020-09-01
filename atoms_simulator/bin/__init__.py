@@ -83,7 +83,7 @@ def test(graphics, no_save):
                 click.echo(f"\n{error} Please generate a new settings file.")
                 return
             if i % settings_ats['R'] == 0:
-                bounce_results[i // settings_ats['R']] = bounce[i // settings_ats['R']].mean()
+                bounce_results[i // settings_ats['R']] = int(bounce[i // settings_ats['R']].mean())
                 cop_results[i // settings_ats['R']] = cop[i // settings_ats['R']].mean()
     if not no_save:
         if not os.path.isdir(results_path := os.path.join(os.getcwd(), "ats_results")):

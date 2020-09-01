@@ -8,10 +8,20 @@ Simulation of gas particles in a closed container.
 - Activate the virtual enviroment `venv\Scripts\activate`
 - Install the package by using `pip install <path_to_a_downloaded_package>`
 - Type `ats` in your commandline, in order to see help for the ats script.
+- To see help concerning one of the available commands, use the --help option with the respective command.
+ex. `ats test --help`
+- Please remember to alter the configuration file if you want to change how the program behaves.
+To get the file use the `ats innit` command. Every command that uses the configuration file looks for it in the current
+working directory.
 
 ## How to use (Linux, Python 3.8)
 
 - Initialize a virtual enviroment `python3 -m venv venv`
 - Activate the virtual enviroment `source venv/bin/activate`
-- Install the package by using `pip install <path_to_a_downloaded_package>`
+- Install the package by using `pip3 install <path_to_a_downloaded_package>`
 - Type `ats` in your commandline, in order to see help for the ats script.
+- To see help concerning one of the available commands, use the --help option with the respective command.
+ex. `ats test --help`
+- Please remember to alter the configuration file if you want to change how the program behaves.
+To get the file use the `ats innit` command. Every command that uses the configuration file looks for it in the current
+working directory.
